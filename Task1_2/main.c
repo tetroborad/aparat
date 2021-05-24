@@ -1,18 +1,19 @@
-#include "main.h"
-
+#include "main.h"     //заголовочный файл с описанием подключаймых библеотечных модулей
+//main обяззательная функция для исполнения кода пользователя  
 int main(void)
 {
-	uint32_t half_period;
-	uint32_t n;
-	uint32_t swreg;
-	uint32_t swrev;
-	RCC->AHBENR|=RCC_AHBENR_GPIOBEN;
-	GPIOB->MODER|=GPIO_MODER_MODER0_0 | GPIO_MODER_MODER1_0 | GPIO_MODER_MODER2_0 |
+	uint32_t half_period;//половина периода мигания светодиода
+	uint32_t n;//Степень коифецента базовой задержки К=2^n
+	uint32_t swreg;//переменная режима работы 0-светодиот "бежит" 1-поочередно загораются а потом гаснут
+	uint32_t swrev;//переменная режимы работы с реверсом 0-реверс с право на лево 1- норма с лево на право
+	RCC->AHBENR|=RCC_AHBENR_GPIOBEN;//Включение тактирования порта В: RCC_AHBENR_GPIOBEN=0х00040000
+	GPIOB->MODER|=GPIO_MODER_MODER0_0 | GPIO_MODER_MODER1_0 | GPIO_MODER_MODER2_0 |//переключение линие с 0 по 8 порта В в режим "Output"
 								GPIO_MODER_MODER3_0 | GPIO_MODER_MODER4_0 | GPIO_MODER_MODER5_0 |
 								GPIO_MODER_MODER6_0 | GPIO_MODER_MODER7_0 | GPIO_MODER_MODER8_0;
 	GPIOB->OSPEEDR|=0X5555; //все порты на скорость в 10 мгц - 0b0101010101010101
-	GPIOB->MODER&=~( GPIO_MODER_MODER12 | GPIO_MODER_MODER13 | GPIO_MODER_MODER11 | GPIO_MODER_MODER10);
-	GPIOB->ODR|=0x100;
+	GPIOB->MODER&=~( GPIO_MODER_MODER12 | GPIO_MODER_MODER13 | GPIO_MODER_MODER14 | GPIO_MODER_MODER15 );//переключение линий с 12(SW4) по 15(SW1) порта В в режим "Input":
+	GPIOB->ODR|=0x100;//
+
 	half_period = 50000;
 	while(1)
 	{
