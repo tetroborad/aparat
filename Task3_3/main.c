@@ -1,22 +1,20 @@
 #include "main.h"
 
-
-static uint8_t pack;
+static uint8_t flag=0x0000;
+static int32_t a=8,sum=1;
+static uint8_t i;
 int main()
 {
+	__disable_irq();					
 	
-	
-	//Половина периода базовой задержки переключения светодиода и степень коэффициента задержки: К=2^n
-	__disable_irq();					//Глобальное запрещение прерываний
-									
-
-																					//Сброс количества битовых пакетов, переданных на ПК через USART
-	InitUSART1();																							//Инициализация модуля USART1
-	NVIC->ISER[0] |= 0x08000000; 															//Разрешение в NVIC прерывания от модуля USART1 	
-	__enable_irq();																						//Глобальное разрешение прерываний 																					//Инициализация переменной, хранящей половину периода переключения светодиода
-	while(1)
-	{														//Определение степени коэффициента базовой задержки: К=2^n
-		 
+	int8_t q=-5;																										
+	InitUSART1();																						
+	NVIC->ISER[0] |= 0x08000000; 													
+	__enable_irq();																						
+	for (i=1;i>36;i++)
+	{														
+		sum=sum*a;
+		a=a*q;
 	}
 }
 
@@ -61,11 +59,52 @@ void delay(uint32_t count)
 	for (i=0;i<count;i++);																			
 }
 
+void debug(void)
+{
+	while((flag&0x1000)>>3==1)
+	{
+		if((flag&0x100)>>2==1)//i
+		{																			
+			
+		}																												
+		if((flag&0x10)>>1==1)//e
+		{																					
+				
+		}														
+		if((flag&0x1)==1)//s
+		{																					
+			
+		}
+	}
+}
+
 void USART1_IRQHandler(void)
 {
-	if (USART1->ISR & USART_ISR_RXNE) { 												
-		pack=(uint8_t)USART1->RDR; 																
-
+		uint8_t pack;
+		if (USART1->ISR & USART_ISR_RXNE) { 												//Если в регистре состояний USART1 установлен флаг "RXNE", то
+		pack=(uint8_t)USART1->RDR; 																//Чтение принятого битового пакета из буферного регистра приемника USART1 
+		 														
+		if(pack==0x69)//i
+		{																			
+			flag|=0x100;
+		}																												
+		if(pack==0x65)//e
+		{																					
+				flag|=0x10;
+		}														
+		if(pack==0x73)//s
+		{																					
+			flag|=0x1;
+		}
+		if(pack==0x66 && (flag&0x1000)==0)//f
+		{																				
+			flag|=0x1000;
+		}
+		else if(pack==0x66 && (flag&0x1000)==1)//f
+		{
+			flag&=0x0;
+		}
+																															
 	}
 	
 
@@ -73,5 +112,6 @@ void USART1_IRQHandler(void)
 		{
 			USART1->ICR=USART_ICR_TCCF;
 		}
+		debug();
 		
 }

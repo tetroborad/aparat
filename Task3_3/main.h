@@ -4,3 +4,4 @@ void USART1_IRQHandler(void); /*Декларация функции обрабо
  от USART1*/
 //Функция задержки: count – кол-во периодов задержки длительностью 2.5 мкс
 void delay(uint32_t);
+void debug(void);
