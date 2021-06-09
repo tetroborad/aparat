@@ -7,11 +7,6 @@ int main()
 {
 	__disable_irq();					
 	int8_t q=-5;
-	RCC->AHBENR|=RCC_AHBENR_GPIOBEN;
-	GPIOB->MODER|=GPIO_MODER_MODER0_0 | GPIO_MODER_MODER1_0 | GPIO_MODER_MODER2_0 |
-								GPIO_MODER_MODER3_0 | GPIO_MODER_MODER4_0 | GPIO_MODER_MODER5_0 |
-								GPIO_MODER_MODER6_0 | GPIO_MODER_MODER7_0 | GPIO_MODER_MODER8_0;
-	GPIOB->ODR|=0x100;
 	InitUSART1();																						
 	NVIC->ISER[0] |= 0x08000000; 													
 	__enable_irq();																						
@@ -69,6 +64,8 @@ void debug(void)
 {
 	uint8_t mes_a[2]={0x61,0x3d};
 	uint8_t mes_n[3]={0x2c,0x6e,0x3d};
+	uint8_t mes_q[3]={0x2a,0x2d,0x35};
+	uint8_t mes_s[3]={0x2c,0x73,0x3d};
 	while((flag&0x1000)>>3==1)
 	{
 		if((flag&0x100)>>2==1)//i
@@ -88,11 +85,35 @@ void debug(void)
 		}																												
 		if((flag&0x10)>>1==1)//e
 		{																					
-				
+			for(uint8_t v=0;v<2;v++)
+			{	
+				while ((USART1->ISR & USART_ISR_TXE) == 0) {} 						
+				USART1->TDR = mes_a[v];
+			}
+			number_out(a);	
+			while ((USART1->ISR & USART_ISR_TXE) == 0) {} 						
+			USART1->TDR = 0x3d;
+			number_out(a/-5);
+			for(uint8_t v=0;v<2;v++)
+			{	
+				while ((USART1->ISR & USART_ISR_TXE) == 0) {} 						
+				USART1->TDR = mes_q[v];
+			}
 		}														
 		if((flag&0x1)==1)//s
 		{																					
-			
+			for(uint8_t v=0;v<2;v++)
+			{	
+				while ((USART1->ISR & USART_ISR_TXE) == 0) {} 						
+				USART1->TDR = mes_a[v];
+			}
+			number_out(a);
+			for(uint8_t v=0;v<2;v++)
+			{	
+				while ((USART1->ISR & USART_ISR_TXE) == 0) {} 						
+				USART1->TDR = mes_s[v];
+			}
+			number_out(sum);
 		}
 	}
 }
