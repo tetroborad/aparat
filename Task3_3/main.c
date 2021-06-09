@@ -6,15 +6,21 @@ static uint8_t i;
 int main()
 {
 	__disable_irq();					
-	
-	int8_t q=-5;																										
+	int8_t q=-5;
+	RCC->AHBENR|=RCC_AHBENR_GPIOBEN;
+	GPIOB->MODER|=GPIO_MODER_MODER0_0 | GPIO_MODER_MODER1_0 | GPIO_MODER_MODER2_0 |
+								GPIO_MODER_MODER3_0 | GPIO_MODER_MODER4_0 | GPIO_MODER_MODER5_0 |
+								GPIO_MODER_MODER6_0 | GPIO_MODER_MODER7_0 | GPIO_MODER_MODER8_0;
+	GPIOB->ODR|=0x100;
 	InitUSART1();																						
 	NVIC->ISER[0] |= 0x08000000; 													
 	__enable_irq();																						
 	for (i=1;i>36;i++)
 	{														
+		GPIOB->BSRR|=0x1;
 		sum=sum*a;
 		a=a*q;
+		GPIOB->BSRR|=0x10000;
 	}
 }
 
@@ -55,17 +61,30 @@ void InitUSART1(){
 
 void delay(uint32_t count)
 {
-	volatile uint32_t i;																			
-	for (i=0;i<count;i++);																			
+	volatile uint32_t j;																			
+	for (j=0;j<count;j++);																			
 }
 
 void debug(void)
 {
+	uint8_t mes_a[2]={0x61,0x3d};
+	uint8_t mes_n[3]={0x2c,0x6e,0x3d};
 	while((flag&0x1000)>>3==1)
 	{
 		if((flag&0x100)>>2==1)//i
 		{																			
-			
+			for(uint8_t v=0;v<2;v++)
+			{	
+				while ((USART1->ISR & USART_ISR_TXE) == 0) {} 						
+				USART1->TDR = mes_a[v];
+			}
+			number_out(a);
+			for(uint8_t v=0;v<2;v++)
+			{	
+				while ((USART1->ISR & USART_ISR_TXE) == 0) {} 						
+				USART1->TDR = mes_n[v];
+			}
+			number_out(i);
 		}																												
 		if((flag&0x10)>>1==1)//e
 		{																					
@@ -96,11 +115,11 @@ void USART1_IRQHandler(void)
 		{																					
 			flag|=0x1;
 		}
-		if(pack==0x66 && (flag&0x1000)==0)//f
+		if(pack==0x66 && ((flag&0x1000)>>3)==0)//f
 		{																				
 			flag|=0x1000;
 		}
-		else if(pack==0x66 && (flag&0x1000)==1)//f
+		else if(pack==0x66 && ((flag&0x1000)>>3)==1)//f
 		{
 			flag&=0x0;
 		}
@@ -114,4 +133,30 @@ void USART1_IRQHandler(void)
 		}
 		debug();
 		
+}
+
+void number_out(int32_t num)
+{
+	uint8_t flag_0=0;
+	if(num<0)
+	{
+		while ((USART1->ISR & USART_ISR_TXE) == 0) {} 						
+		USART1->TDR = 0x2d;
+		num=num*(-1);
+	}
+	uint8_t mes[30];
+	for(uint8_t k=29;num!=0;k--)
+	{
+		mes[k]=(uint32_t)num%10+48;
+		num=num/10;
+	}	
+	for(uint8_t k=0;k<30;k++)
+	{
+		if((!(mes[k]==0x30))||(!flag_0))
+		{
+			flag_0=1;
+			while ((USART1->ISR & USART_ISR_TXE) == 0) {} 						
+			USART1->TDR = mes[k];
+		}		
+	}
 }
