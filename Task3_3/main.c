@@ -1,21 +1,23 @@
 #include "main.h"
 
 static uint8_t flag=0x0000;
-static int32_t a=8,sum=1;
-static uint8_t i;
+static int32_t a=8,sum=8;
+static uint8_t i=1;
 int main()
 {
-	__disable_irq();					
+	__disable_irq();
 	int8_t q=-5;
 	InitUSART1();																						
 	NVIC->ISER[0] |= 0x08000000; 													
-	__enable_irq();																						
-	for (i=1;i>36;i++)
-	{														
-		GPIOB->BSRR|=0x1;
+	__enable_irq();									
+	while(i<=36)
+	{													
+		
+		a=a*q;		
 		sum=sum*a;
-		a=a*q;
-		GPIOB->BSRR|=0x10000;
+		i++;
+		number_out(a);
+		number_out(i);
 	}
 }
 
@@ -146,18 +148,16 @@ void USART1_IRQHandler(void)
 		}
 																															
 	}
-	
-
 	if (USART1->ISR & USART_ISR_TC) 
 		{
 			USART1->ICR=USART_ICR_TCCF;
-		}
-		debug();
-		
+		}		
 }
 
 void number_out(int32_t num)
 {
+	int32_t con=48;
+	int32_t ten=10;
 	uint8_t flag_0=0;
 	if(num<0)
 	{
@@ -165,19 +165,19 @@ void number_out(int32_t num)
 		USART1->TDR = 0x2d;
 		num=num*(-1);
 	}
-	uint8_t mes[30];
+	int32_t mes[30];
 	for(uint8_t k=29;num!=0;k--)
 	{
-		mes[k]=(uint32_t)num%10+48;
-		num=num/10;
+		mes[k]=num%ten+con;
+		num=num/ten;
 	}	
 	for(uint8_t k=0;k<30;k++)
 	{
-		if((!(mes[k]==0x30))||(!flag_0))
+		if((!(mes[k]==0x30))&&(!flag_0))
 		{
 			flag_0=1;
 			while ((USART1->ISR & USART_ISR_TXE) == 0) {} 						
-			USART1->TDR = mes[k];
+			USART1->TDR = (uint8_t)mes[k];
 		}		
 	}
 }
