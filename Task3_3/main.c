@@ -1,7 +1,9 @@
 #include "main.h"
 
+static uint8_t k=0;
+static uint32_t mes[256];
 static uint8_t flag=0x0000;
-static int32_t a=8,sum=8;
+static int64_t a=8,sum=8;
 static uint8_t i=1;
 int main()
 {
@@ -10,14 +12,13 @@ int main()
 	InitUSART1();																						
 	NVIC->ISER[0] |= 0x08000000; 													
 	__enable_irq();									
-	while(i<=36)
-	{													
-		
+	while(i<36)
+	{														
 		a=a*q;		
 		sum=sum*a;
 		i++;
-		number_out(a);
-		number_out(i);
+		delay(500000);
+		debug();
 	}
 }
 
@@ -68,9 +69,9 @@ void debug(void)
 	uint8_t mes_n[3]={0x2c,0x6e,0x3d};
 	uint8_t mes_q[3]={0x2a,0x2d,0x35};
 	uint8_t mes_s[3]={0x2c,0x73,0x3d};
-	while((flag&0x1000)>>3==1)
+	while((flag&0x8)>>3==1)
 	{
-		if((flag&0x100)>>2==1)//i
+		if((flag&0x4)>>2==1)//i
 		{																			
 			for(uint8_t v=0;v<2;v++)
 			{	
@@ -84,8 +85,9 @@ void debug(void)
 				USART1->TDR = mes_n[v];
 			}
 			number_out(i);
+			flag&=~0x4;
 		}																												
-		if((flag&0x10)>>1==1)//e
+		if((flag&0x2)>>1==1)//e
 		{																					
 			for(uint8_t v=0;v<2;v++)
 			{	
@@ -96,11 +98,12 @@ void debug(void)
 			while ((USART1->ISR & USART_ISR_TXE) == 0) {} 						
 			USART1->TDR = 0x3d;
 			number_out(a/-5);
-			for(uint8_t v=0;v<2;v++)
+			for(uint8_t v=0;v<3;v++)
 			{	
 				while ((USART1->ISR & USART_ISR_TXE) == 0) {} 						
 				USART1->TDR = mes_q[v];
 			}
+			flag&=~0x2;
 		}														
 		if((flag&0x1)==1)//s
 		{																					
@@ -116,6 +119,7 @@ void debug(void)
 				USART1->TDR = mes_s[v];
 			}
 			number_out(sum);
+			flag&=~0x1;
 		}
 	}
 }
@@ -128,36 +132,34 @@ void USART1_IRQHandler(void)
 		 														
 		if(pack==0x69)//i
 		{																			
-			flag|=0x100;
+			flag|=0x4;
 		}																												
 		if(pack==0x65)//e
 		{																					
-				flag|=0x10;
+				flag|=0x2;
 		}														
 		if(pack==0x73)//s
 		{																					
 			flag|=0x1;
 		}
-		if(pack==0x66 && ((flag&0x1000)>>3)==0)//f
+		if(pack==0x66 && ((flag&0x8)>>3)==0)//f
 		{																				
-			flag|=0x1000;
+			flag=0x8;
 		}
-		else if(pack==0x66 && ((flag&0x1000)>>3)==1)//f
+		else if(pack==0x66 && ((flag&0x8)>>3)==1)//f
 		{
-			flag&=0x0;
-		}
-																															
+			flag=0x0;
+		}																													
 	}
 	if (USART1->ISR & USART_ISR_TC) 
 		{
 			USART1->ICR=USART_ICR_TCCF;
-		}		
+		}
 }
 
-void number_out(int32_t num)
+void number_out(int64_t num)
 {
-	int32_t con=48;
-	int32_t ten=10;
+	uint8_t j=k;
 	uint8_t flag_0=0;
 	if(num<0)
 	{
@@ -165,19 +167,16 @@ void number_out(int32_t num)
 		USART1->TDR = 0x2d;
 		num=num*(-1);
 	}
-	int32_t mes[30];
-	for(uint8_t k=29;num!=0;k--)
+	for(;num!=0;k++)
 	{
-		mes[k]=num%ten+con;
-		num=num/ten;
+		mes[k]=num%10+0x30;
+		num=num/10;
 	}	
-	for(uint8_t k=0;k<30;k++)
+	for(uint8_t d=0;k-j>=d;d++)
 	{
-		if((!(mes[k]==0x30))&&(!flag_0))
-		{
 			flag_0=1;
 			while ((USART1->ISR & USART_ISR_TXE) == 0) {} 						
-			USART1->TDR = (uint8_t)mes[k];
-		}		
+			USART1->TDR = (uint8_t)mes[k-d];		
 	}
+
 }
