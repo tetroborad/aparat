@@ -1,6 +1,7 @@
 #include "main.h"
 
 static uint8_t k=0;
+
 static uint32_t mes[256];
 static uint8_t flag=0x0000;
 static int64_t a=8,sum=8;
@@ -69,7 +70,7 @@ void debug(void)
 	uint8_t mes_n[3]={0x2c,0x6e,0x3d};
 	uint8_t mes_q[3]={0x2a,0x2d,0x35};
 	uint8_t mes_s[3]={0x2c,0x73,0x3d};
-	while((flag&0x8)>>3==1)
+	while((flag&0xF8)>>3==31)
 	{
 		if((flag&0x4)>>2==1)//i
 		{																			
@@ -85,6 +86,10 @@ void debug(void)
 				USART1->TDR = mes_n[v];
 			}
 			number_out(i);
+			while ((USART1->ISR & USART_ISR_TXE) == 0) {} 						
+			USART1->TDR = 0x0D;
+			while ((USART1->ISR & USART_ISR_TXE) == 0) {} 						
+			USART1->TDR = 0x0A;
 			flag&=~0x4;
 		}																												
 		if((flag&0x2)>>1==1)//e
@@ -103,6 +108,11 @@ void debug(void)
 				while ((USART1->ISR & USART_ISR_TXE) == 0) {} 						
 				USART1->TDR = mes_q[v];
 			}
+			while ((USART1->ISR & USART_ISR_TXE) == 0) {} 						
+			USART1->TDR = 0x0D;
+			while ((USART1->ISR & USART_ISR_TXE) == 0) {} 						
+			USART1->TDR = 0x0A;
+
 			flag&=~0x2;
 		}														
 		if((flag&0x1)==1)//s
@@ -119,6 +129,10 @@ void debug(void)
 				USART1->TDR = mes_s[v];
 			}
 			number_out(sum);
+			while ((USART1->ISR & USART_ISR_TXE) == 0) {} 						
+			USART1->TDR = 0x0D;
+			while ((USART1->ISR & USART_ISR_TXE) == 0) {} 						
+			USART1->TDR = 0x0A;
 			flag&=~0x1;
 		}
 	}
@@ -127,29 +141,38 @@ void debug(void)
 void USART1_IRQHandler(void)
 {
 		uint8_t pack;
-		if (USART1->ISR & USART_ISR_RXNE) { 												//Если в регистре состояний USART1 установлен флаг "RXNE", то
-		pack=(uint8_t)USART1->RDR; 																//Чтение принятого битового пакета из буферного регистра приемника USART1 
-		 														
-		if(pack==0x69)//i
-		{																			
-			flag|=0x4;
-		}																												
-		if(pack==0x65)//e
-		{																					
-				flag|=0x2;
-		}														
-		if(pack==0x73)//s
-		{																					
-			flag|=0x1;
-		}
-		if(pack==0x66 && ((flag&0x8)>>3)==0)//f
-		{																				
-			flag=0x8;
-		}
-		else if(pack==0x66 && ((flag&0x8)>>3)==1)//f
-		{
-			flag=0x0;
-		}																													
+		if (USART1->ISR & USART_ISR_RXNE) { 												
+		pack=(uint8_t)USART1->RDR; 																
+		switch ( pack ) {															
+		case 0x69:																					
+			flag|=0x4;																																																 
+			break;																						
+		case 0x65:																							
+			flag|=0x2;																																																		
+			break;																							
+		case 0x73:																							
+			flag|=0x1;																																																	
+			break;																								
+																															
+		case 27:																									
+				flag|=0x8;																					
+			break;																								
+		case 91:																								
+				flag|=0x10;																							
+			break;																								
+		case 49:																									
+				flag|=0x20;																									
+			break;																									
+		case 53:																									
+				flag|=0x40;																										
+			break;																									
+		case 126:																									
+				flag|=0x80;																										
+			break;																									
+		default:																									
+				flag=0;																					
+			break;																									
+		} 																																											
 	}
 	if (USART1->ISR & USART_ISR_TC) 
 		{
