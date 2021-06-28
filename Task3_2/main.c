@@ -1,7 +1,7 @@
 #include "main.h"
 
-static uint8_t buf[6]={0,0,0,0,0,0};							 //Буфер данных, передаваемых на ПК посредством USART
-static uint32_t iReadyTX; //Количество битовых пакетов готовых для передачи и переденных на ПК соответственно int main ()
+static uint8_t buf[6]={0,0,0,0,0,0};							 
+static uint32_t iReadyTX; 
 static int ent_nev_znac=0;
 static uint8_t half_period_mas[6]={53, 48, 48, 48, 48, 0};
 static uint32_t period=50000;
@@ -10,12 +10,11 @@ int main()
 {
 	
 	
-	//Половина периода базовой задержки переключения светодиода и степень коэффициента задержки: К=2^n
-	__disable_irq();					//Глобальное запрещение прерываний
+	
+	__disable_irq();					
 	uint32_t half_period;
-	//Настройка порта GPIOB для контроля светодиода
-	RCC->AHBENR|=RCC_AHBENR_GPIOBEN;													//Включение тактирования порта В
-	GPIOB->MODER|= GPIO_MODER_MODER0_0 | GPIO_MODER_MODER8_0| GPIO_MODER_MODER1_0; //Переключение линий 0 и 8 порта В в режим "Output"
+	RCC->AHBENR|=RCC_AHBENR_GPIOBEN;													
+	GPIOB->MODER|= GPIO_MODER_MODER0_0 | GPIO_MODER_MODER8_0| GPIO_MODER_MODER1_0; 
 	GPIOB->ODR|=0x100;																				//Разрешение работы светодиодов на стенде CТМ_01 с помощью установки логической "1" на выводе РВ.8									
 	//---------------------------------------------
 	iReadyTX = 0;																							//Сброс количества битовых пакетов, подготовленных для передачи на ПК																					//Сброс количества битовых пакетов, переданных на ПК через USART
@@ -66,33 +65,33 @@ void InitUSART1(){
 	USART1->CR1 |= USART_CR1_UE;																	//По завершении конфигурирования USART разрешить его работу (биту UE регистра CR1 присвоить 1)
 }
 
-//Функция задержки: count - количество элементарных периодов задержки с длительностью примерно 2.5 мкс 
+
 void delay(uint32_t count)
 {
-	volatile uint32_t i;																				//объявляем неоптимизируемую переменную
-	for (i=0;i<count;i++);																			//Выполнение пустых циклов для реализации программной задержки
+	volatile uint32_t i;																			
+	for (i=0;i<count;i++);																			
 }
 
-//Функция-обработчик прерывания от модуля USART1 
+ 
 void USART1_IRQHandler(void)
 {
 	
 	uint32_t namb=0;
 	uint8_t old_per[36]={0xd0, 0xbf, 0xd0, 0xb5, 0xd1, 0x80, 0xd0, 0xb8, 0xd0, 0xbe, 0xd0, 0xb4, 0x20, 0xd0, 0xbc, 0xd0, 0xb8, 0xd0, 0xb3, 0xd0, 0xb0, 0xd0, 0xbd, 0xd0, 0xb8, 0xd1, 0x8f, 0x2c, 0x20, 0xd0, 0xbc, 0xd0, 0xba, 0xd1, 0x81, 0x3a};
 	uint8_t new_value[36]={0xd0, 0x9d, 0xd0, 0xbe, 0xd0, 0xb2, 0xd0, 0xbe, 0xd0, 0xb5, 0x20, 0xd0, 0xb7, 0xd0, 0xbd, 0xd0, 0xb0, 0xd1, 0x87, 0xd0, 0xb5, 0xd0, 0xbd, 0xd0, 0xb8, 0xd0, 0xb5, 0x2c, 0x20, 0xd0, 0xbc, 0xd0, 0xba, 0xd1, 0x81, 0x3a};
-	//Событие готовности принятых данных к чтению 
-	if (USART1->ISR & USART_ISR_RXNE) { 												//Если в регистре состояний USART1 установлен флаг "RXNE", то
-		pack=(uint8_t)USART1->RDR; 																//Чтение принятого битового пакета из буферного регистра приемника USART1 
-		 																	//Определение количества сотен в принятом значении
+	
+	if (USART1->ISR & USART_ISR_RXNE) { 												
+		pack=(uint8_t)USART1->RDR; 																
+		 																	
 		if(pack>=48&pack<=57&ent_nev_znac&iReadyTX+1<=6)
-		{																					//Убрать из принятого значения сотни и оставить в числе 2 значащие цифры, которые соответствуют десяткам и единицам 
+		{																					
 			buf[(uint8_t)iReadyTX] = pack;
-			while ((USART1->ISR & USART_ISR_TXE) == 0) {} 						//Дождаться готовности передатчика USART1 к приему битового пакета для отправки на ПК
+			while ((USART1->ISR & USART_ISR_TXE) == 0) {} 						
 			USART1->TDR = buf[(uint8_t)iReadyTX];
 			iReadyTX++;
-		}																													//увеличить количество данных готовых для передачи на единицу
+		}																													
 		if(pack==13)
-		{																					//Убрать из принятого значения сотни и оставить в числе 2 значащие цифры, которые соответствуют десяткам и единицам 
+		{																					
 			if(ent_nev_znac)
 			{
 				namb=buf[0]-48;
@@ -103,9 +102,9 @@ void USART1_IRQHandler(void)
 					}
 				period=(uint32_t)namb;
 				ent_nev_znac=0;
-				while ((USART1->ISR & USART_ISR_TXE) == 0) {} 						//Дождаться готовности передатчика USART1 к приему битового пакета для отправки на ПК
+				while ((USART1->ISR & USART_ISR_TXE) == 0) {} 						
 				USART1->TDR = 0x0d;
-				while ((USART1->ISR & USART_ISR_TXE) == 0) {} 						//Дождаться готовности передатчика USART1 к приему битового пакета для отправки на ПК
+				while ((USART1->ISR & USART_ISR_TXE) == 0) {} 						
 				USART1->TDR = 0x0a;
 				for (uint8_t i=0;i<6;i++)
 					{
@@ -120,41 +119,37 @@ void USART1_IRQHandler(void)
 				ent_nev_znac=1;
 				for (uint8_t i=0;i<36;i++)
 					{
-						while ((USART1->ISR & USART_ISR_TXE) == 0) {} 						//Дождаться готовности передатчика USART1 к приему битового пакета для отправки на ПК
+						while ((USART1->ISR & USART_ISR_TXE) == 0) {} 						
 						USART1->TDR = old_per[i];
 					}
 				for (uint8_t i=0;i<6;i++)
 					{
-						while ((USART1->ISR & USART_ISR_TXE) == 0) {} 						//Дождаться готовности передатчика USART1 к приему битового пакета для отправки на ПК
+						while ((USART1->ISR & USART_ISR_TXE) == 0) {} 						
 						USART1->TDR = half_period_mas[i];
 					}
-				while ((USART1->ISR & USART_ISR_TXE) == 0) {} 						//Дождаться готовности передатчика USART1 к приему битового пакета для отправки на ПК
+				while ((USART1->ISR & USART_ISR_TXE) == 0) {} 						
 				USART1->TDR = 0x0d;
-				while ((USART1->ISR & USART_ISR_TXE) == 0) {} 						//Дождаться готовности передатчика USART1 к приему битового пакета для отправки на ПК
+				while ((USART1->ISR & USART_ISR_TXE) == 0) {} 						
 				USART1->TDR = 0x0a;
 				for (uint8_t i=0;i<36;i++)
 					{
-						while ((USART1->ISR & USART_ISR_TXE) == 0) {} 						//Дождаться готовности передатчика USART1 к приему битового пакета для отправки на ПК
+						while ((USART1->ISR & USART_ISR_TXE) == 0) {} 						
 						USART1->TDR = new_value[i];
 					}
 			}	
-		}														//Поместить после цифр принятого значения разделитель - "пробел";
+		}														
 		if(pack==0x7f&iReadyTX!=0)
-		{																					//Убрать из принятого значения сотни и оставить в числе 2 значащие цифры, которые соответствуют десяткам и единицам 
+		{																					
 			buf[(uint8_t)iReadyTX--] = 0;
-			while ((USART1->ISR & USART_ISR_TXE) == 0) {} 						//Дождаться готовности передатчика USART1 к приему битового пакета для отправки на ПК
+			while ((USART1->ISR & USART_ISR_TXE) == 0) {} 						
 			USART1->TDR = 0x7f; 
-		}																													//увеличить количество данных готовых для передачи на единицу								//Отправить старшую цифру ASCII-кода в передатчик USART1; 
-																															//увеличить количество переданных на ПК данных на единицу
+		}																													
+																															
 	}
-	
-	//Событие завершение передачи битового пакета 
-															//Если в регистре состояний USART1 установлен флаг "ТС", то
-		// Сброс флага завершения передачи кадра 
+
 	if (USART1->ISR & USART_ISR_TC) {
 			USART1->ICR=USART_ICR_TCCF;
 			
-		}//Сбросить флаг завершения передачи кадра, чтобы прерывание не сработало повторно
-	//Если количество переданных данных меньше, чем количество подготовленных для передачи, то передать следующий битовой пакет из программного буфера в USART1 для отправки на ПК
+		}
 		
 }

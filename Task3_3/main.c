@@ -15,11 +15,10 @@ int main()
 	__enable_irq();									
 	while(i<36)
 	{														
+		debug();
 		a=a*q;		
 		sum=sum*a;
 		i++;
-		delay(500000);
-		debug();
 	}
 }
 
@@ -67,19 +66,18 @@ void delay(uint32_t count)
 void debug(void)
 {
 	uint8_t mes_a[2]={0x61,0x3d};
-	uint8_t mes_n[3]={0x2c,0x6e,0x3d};
+	uint8_t mes_n[2]={0x6e,0x3d};
 	uint8_t mes_q[3]={0x2a,0x2d,0x35};
-	uint8_t mes_s[3]={0x2c,0x73,0x3d};
-	while((flag&0xF8)>>3==31)
+	uint8_t mes_s[2]={0x73,0x3d};
+	while(1)
 	{
+		if((flag&0xF8)>>3==31)
+		{
+			flag=0;
+			break;
+		}
 		if((flag&0x4)>>2==1)//i
 		{																			
-			for(uint8_t v=0;v<2;v++)
-			{	
-				while ((USART1->ISR & USART_ISR_TXE) == 0) {} 						
-				USART1->TDR = mes_a[v];
-			}
-			number_out(a);
 			for(uint8_t v=0;v<2;v++)
 			{	
 				while ((USART1->ISR & USART_ISR_TXE) == 0) {} 						
@@ -94,7 +92,7 @@ void debug(void)
 		}																												
 		if((flag&0x2)>>1==1)//e
 		{																					
-			for(uint8_t v=0;v<2;v++)
+			for(uint8_t v=0;v<3;v++)
 			{	
 				while ((USART1->ISR & USART_ISR_TXE) == 0) {} 						
 				USART1->TDR = mes_a[v];
@@ -117,12 +115,6 @@ void debug(void)
 		}														
 		if((flag&0x1)==1)//s
 		{																					
-			for(uint8_t v=0;v<2;v++)
-			{	
-				while ((USART1->ISR & USART_ISR_TXE) == 0) {} 						
-				USART1->TDR = mes_a[v];
-			}
-			number_out(a);
 			for(uint8_t v=0;v<2;v++)
 			{	
 				while ((USART1->ISR & USART_ISR_TXE) == 0) {} 						
@@ -168,10 +160,7 @@ void USART1_IRQHandler(void)
 			break;																									
 		case 126:																									
 				flag|=0x80;																										
-			break;																									
-		default:																									
-				flag=0;																					
-			break;																									
+			break;																																																		
 		} 																																											
 	}
 	if (USART1->ISR & USART_ISR_TC) 
