@@ -1,5 +1,5 @@
 #include "main.h"																													//
-static uint32_t tim7Time[4] = {8,6,4,2};		
+static double tim7Time[4] = {8,6,4,2};		
 static _Bool statePB0 = 0;	
 static double t_n[390]={} ;
 static uint32_t phase = 0;
@@ -67,12 +67,12 @@ void TIM7_IRQHandler(void)																								//	Функция-обрабо
 
 void TIM6_DAC_IRQHandler(void)																						//	Функция-обработчик прерывания таймера TIM6
 {	
-	if(SW_1_2!=(((GPIOB->IDR)&0xc000)>>12))
+	if(SW_1_2!=(((GPIOB->IDR)&0xc000)>>14))
 		T = (uint32_t)(4000 + 1000 * (((GPIOB->IDR)&0xc000)>>14));
 		TIM6->PSC=T;
 		InitMass();
 	if (statePB0==0)                                                        //  Если светодиод выключен,
-		TIM6->ARR =t_n(phase);  
+		TIM6->ARR =t_n[phase];  
 	else                                                  //  Если светодиод включен
     TIM6->ARR = T;                                                //  Если светодиод включен	                //  
 	

@@ -30,12 +30,12 @@ Build target 'Target 1'
 main.c(4): warning: use of GNU empty initializer extension [-Wgnu-empty-initializer]
 static double t_n[390]={} ;
                        ^
-main.c(75): error: called object type 'double [390]' is not a function or function pointer
-                TIM6->ARR =t_n(phase);  
-                           ~~~^
-1 warning and 1 error generated.
+1 warning generated.
 compiling main.c...
-".\Objects\tiv4_3.axf" - 1 Error(s), 1 Warning(s).
+linking...
+Program Size: Code=3800 RO-data=352 RW-data=16 ZI-data=4768  
+FromELF: creating hex file...
+".\Objects\tiv4_3.axf" - 0 Error(s), 1 Warning(s).
 
 <h2>Software Packages used:</h2>
 
@@ -62,11 +62,10 @@ Package Vendor: Keil
 
    * Component: Keil.Standalone::Device:Startup:1.0.0
       Include file:  Drivers\CMSIS\Device\ST\STM32F0xx\Include\stm32f0xx.h
+      Source file:   Drivers\CMSIS\Device\ST\STM32F0xx\Source\Templates\arm\startup_stm32f072xb.s
       Source file:   MDK\Device\Source\ARM\STM32F0xx_OPT.s
       Source file:   Drivers\CMSIS\Device\ST\STM32F0xx\Source\Templates\system_stm32f0xx.c
-      Source file:   Drivers\CMSIS\Device\ST\STM32F0xx\Source\Templates\arm\startup_stm32f072xb.s
-Target not created.
-Build Time Elapsed:  00:00:00
+Build Time Elapsed:  00:00:01
 </pre>
 </body>
 </html>
