@@ -1,0 +1,11 @@
+|tiv1_2
+F <= inst7.DB_MAX_OUTPUT_PORT_TYPE
+C => inst2.IN0
+C => inst2.IN1
+C => inst5.IN0
+B => inst1.IN0
+B => inst1.IN1
+A => inst.IN0
+A => inst.IN1
+
+
